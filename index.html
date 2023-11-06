@@ -1,0 +1,82 @@
+<html>
+
+<head>
+    <title>Face Filter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clmtrackr@1.1.2/build/clmtrackr.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        let outputWidth;
+        let outputHeight;
+        let faceTracker; // Face Tracking
+        let videoInput;
+        let imgSunglass; // Sunglasses Filter
+
+        function preload() {
+            // Sunglasses Filter asset
+            imgSunglass = loadImage("https://i.ibb.co/yyBsfX5/sunglasses.png");
+        }
+
+        function setup() {
+            const maxWidth = Math.min(windowWidth, windowHeight);
+            pixelDensity(1);
+            outputWidth = maxWidth;
+            outputHeight = maxWidth * 0.75; // 4:3
+
+            createCanvas(outputWidth, outputHeight);
+
+            // Webcam capture
+            videoInput = createCapture(VIDEO);
+            videoInput.size(outputWidth, outputHeight);
+            videoInput.hide();
+
+            // Tracker
+            faceTracker = new clm.tracker();
+            faceTracker.init();
+            faceTracker.start(videoInput.elt);
+        }
+
+        function draw() {
+            image(videoInput, 0, 0, outputWidth, outputHeight);
+            drawSunglasses();
+        }
+
+        function drawSunglasses() {
+            const positions = faceTracker.getCurrentPosition();
+            if (positions !== false) {
+                push();
+                const eyepos1 = positions[32]; // left eye
+                const eyepos2 = positions[27]; // right eye
+                const wx = dist(eyepos1[0], eyepos1[1], eyepos2[0], eyepos2[1]) * 2; // Increase width
+                const wy = wx * 0.5; // Increase height
+                const centerX = (eyepos1[0] + eyepos2[0]) / 2;
+                const centerY = (eyepos1[1] + eyepos2[1]) / 2;
+                translate(centerX - wx / 2, centerY - wy / 2);
+                image(imgSunglass, 0, 0, wx, wy);
+                pop();
+            }
+        }
+
+        function windowResized() {
+            const maxWidth = Math.min(windowWidth, windowHeight);
+            pixelDensity(1);
+            outputWidth = maxWidth;
+            outputHeight = maxWidth * 0.75;
+            resizeCanvas(outputWidth, outputHeight);
+        }
+    </script>
+</body>
+
+</html>
